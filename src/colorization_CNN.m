@@ -79,7 +79,7 @@ if (train_flag)
     opts.batchsize = 128;
     opts.numepochs = 2;
     opts.count = 1;
-    opts.c = 50000;
+    opts.c = 20000;
 
     cnn = cnnsetup(cnn, train_x_patches, train_y_patches);
     toc
