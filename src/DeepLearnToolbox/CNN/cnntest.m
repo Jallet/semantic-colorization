@@ -11,23 +11,24 @@ function [er, bad] = cnntest(net, x, y)
     original_yuv(:, :, 2 : 3, :) = original_uv;
     save('/home/jiangliang/code/semantic-colorization/result/result_yuv', 'result_yuv');
     save('/home/jiangliang/code/semantic-colorization/result/original_yuv', 'original_yuv');
-    
-    samples_to_display = randperm(size(y, 2));
-    samples_to_display = samples_to_display(1 : 4);
-    for i = 1 : length(samples_to_display)
-        original_image = original_yuv(:, :, :, samples_to_display(i)); 
-        result_image = result_yuv(:, :, :, samples_to_display(i)); 
-        original_rgb_image = yuv2rgb(original_image, 0);
-        result_rgb_image = yuv2rgb(result_image, 0);
-        figure();
-        title('original');
-        subplot(1, 2, 1);
-        imshow(original_rgb_image);
-        title('colorization');
-        subplot(1, 2, 2);
-        imshow(result_rgb_image);
+     
+    %samples_to_display = randperm(size(y, 2));
+    %samples_to_display = samples_to_display(1 : 4);
+    %for i = 1 : length(samples_to_display)
+    %    original_image = original_yuv(:, :, :, samples_to_display(i)); 
+    %    result_image = result_yuv(:, :, :, samples_to_display(i)); 
+    %    original_rgb_image = yuv2rgb(original_image, 0);
+    %    result_rgb_image = yuv2rgb(result_image, 0);
+    %    figure();
+    %    title('original');
+    %    subplot(1, 2, 1);
+    %    imshow(original_rgb_image);
+    %    title('colorization');
+    %    subplot(1, 2, 2);
+    %    imshow(result_rgb_image);
 
-    end
+    %end
+
     %[~, h] = max(net.o);
     %[~, a] = max(y);
     %bad = find(h ~= a);
