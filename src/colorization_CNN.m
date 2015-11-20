@@ -77,7 +77,7 @@ if (train_flag)
     
     opts.alpha = 10e-5;
     opts.batchsize = 128;
-    opts.numepochs = 3;
+    opts.numepochs = 2;
     opts.count = 1;
     opts.c = 50000;
 
