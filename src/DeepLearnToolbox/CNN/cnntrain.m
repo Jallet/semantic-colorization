@@ -17,11 +17,11 @@ function net = cnntrain(net, x, y, opts)
             opts.alpha = 1.0/(opts.c + opts.count);
             opts.count = opts.count + 1;
             net = cnnapplygrads(net, opts);
-            disp(['Epoch ' num2str(i) '/' num2str(opts.numepochs) ', Batch: ' num2str(l) '/' num2str(numbatches), ', Loss: ' num2str(net.L) ', Gradient: ' num2str(net.gradient)]);
             if isempty(net.rL)
                 net.rL(1) = net.L;
             end
             net.rL(end + 1) = 0.99 * net.rL(end) + 0.01 * net.L;
+            disp(['Epoch ' num2str(i) '/' num2str(opts.numepochs) ', Batch: ' num2str(l) '/' num2str(numbatches), ', net.L: ' num2str(net.L) ', net.rL: ' num2str(net.rL(end)) ', Gradient: ' num2str(net.gradient)]);
         end
         toc
     end
