@@ -1,6 +1,6 @@
 %function test_example_CNN
 addpath(genpath('DeepLearnToolbox'));
-train_flag = 1
+train_flag = 0
 data_path = '/home/jiangliang/code/semantic-colorization/data/yuv_image/';
 params_path = '/home/jiangliang/code/semantic-colorization/params/';
 disp('Loading data...');
@@ -88,21 +88,22 @@ if (train_flag)
     cnn = cnntrain(cnn, train_x_patches, train_y_patches, opts);
     toc
     now_time = datestr(now, 'yyyy-mm-DD-HHMM');
-    save([params_path 'cnn.' now_time], 'cnn', '-v7.3');
+    save([params_path 'cnn.' now_time '.mat'], 'cnn', '-v7.3');
 else
     %load newest parameter
-    disp('Loading CNN')
     tic
     cnn_params = dir(params_path);
-    load([params_path cnn_params(length(cnn_params)).name]);
+    disp(['Loading ' cnn_params(end).name]);
+    load([params_path cnn_params(end).name]);
     toc
 end
 
 tic
 disp('Testing CNN...');
-[er, bad] = cnntest(cnn, test_x, test_y);
+[er, bad] = cnntest(cnn, test_x_patches, test_y_patches);
 toc
 
 %plot mean squared error
 %figure; plot(cnn.rL);
 %assert(er<0.12, 'Too big error');
+quit;
