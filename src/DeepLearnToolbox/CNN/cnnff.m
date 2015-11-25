@@ -1,4 +1,4 @@
-function net = cnnff(net, x)
+function net = cnnff(net, x, opts)
     n = numel(net.layers);
     net.layers{1}.a{1} = x;
     inputmaps = 1;
@@ -8,13 +8,14 @@ function net = cnnff(net, x)
             %  !!below can probably be handled by insane matrix operations
             for j = 1 : net.layers{l}.outputmaps   %  for each output map
                 %  create temp output map
+                %size of each output map
                 z = zeros(size(net.layers{l - 1}.a{1}) - [net.layers{l}.kernelsize - 1 net.layers{l}.kernelsize - 1 0]);
                 for i = 1 : inputmaps   %  for each input map
                     %  convolve with corresponding kernel and add to temp output map
                     z = z + convn(net.layers{l - 1}.a{i}, net.layers{l}.k{i}{j}, 'valid');
                 end
                 %  add bias, pass through nonlinearity
-                net.layers{l}.a{j} = sigm(z + net.layers{l}.b{j});
+                net.layers{l}.a{j} = activate(z + net.layers{l}.b{j}, opts.activation_type);
             end
             %  set number of input maps to this layers number of outputmaps
             inputmaps = net.layers{l}.outputmaps;
@@ -34,6 +35,6 @@ function net = cnnff(net, x)
         net.fv = [net.fv; reshape(net.layers{n}.a{j}, sa(1) * sa(2), sa(3))];
     end
     %  feedforward into output perceptrons
-    net.o = sigm(net.ffW * net.fv + repmat(net.ffb, 1, size(net.fv, 2))) - 1 / 2;
-
+    %net.o = activate(net.ffW * net.fv + repmat(net.ffb, 1, size(net.fv, 2)), opts.activation_type);
+    net.o = sigm(net.ffW * net.fv + repmat(net.ffb, 1, size(net.fv, 2)));
 end

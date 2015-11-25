@@ -1,4 +1,4 @@
-function net = cnnbp(net, y, height, width)
+function net = cnnbp(net, y, height, width, opts)
     local_color_consistent_lambda = 0.5;
     n = numel(net.layers);
 
@@ -10,38 +10,51 @@ function net = cnnbp(net, y, height, width)
     net.L = 1/2* sum(net.e(:) .^ 2) / size(net.e, 2);
 
     %local color consistent
-    predict_color = reshape(net.o, [height, width, 2, size(y, 2)]);
-    color_consistent_weight = [0.1, 0.15, 0.1;
-                               0.15, 0, 0.15;
-                               0.1, 0.15, 0.1];
-    for i = 1 : size(y, 2)
-        predict_weighted_color_u = conv2(predict_color(:, :, 1, i), color_consistent_weight, 'same');
-        predict_weighted_color_v = conv2(predict_color(:, :, 2, i), color_consistent_weight, 'same');
-        diff_u = abs(predict_weighted_color_u - predict_color(:, :, 1, i));
-        diff_v = abs(predict_weighted_color_v - predict_color(:, :, 2, i));
-         
-        diff_sum = diff_u .^ 2 + diff_v .^ 2;
-        %net.L = net.L + local_color_consistent_lambda * (sum(diff_sum(:)));
+    %predict_color = reshape(net.o, [height, width, 2, size(y, 2)]);
+    %color_consistent_weight = [0.1, 0.15, 0.1;
+    %                           0.15, 0, 0.15;
+    %                           0.1, 0.15, 0.1];
+    %for i = 1 : size(y, 2)
+    %    predict_weighted_color_u = conv2(predict_color(:, :, 1, i), color_consistent_weight, 'same');
+    %    predict_weighted_color_v = conv2(predict_color(:, :, 2, i), color_consistent_weight, 'same');
+    %    diff_u = abs(predict_weighted_color_u - predict_color(:, :, 1, i));
+    %    diff_v = abs(predict_weighted_color_v - predict_color(:, :, 2, i));
+    %     
+    %    diff_sum = diff_u .^ 2 + diff_v .^ 2;
+    %    %net.L = net.L + local_color_consistent_lambda * (sum(diff_sum(:)));
 
-    end
+    %end
     %%  backprop deltas
+    %net.od = net.e .* (net.o .* (1 - net.o));   %  output delta
+    %net.fvd = (net.ffW' * net.od);              %  feature vector delta
+    %if strcmp(net.layers{n}.type, 'c')         %  only conv layers has sigm function
+    %    net.fvd = net.fvd .* (net.fv .* (1 - net.fv));
+    %end
+    %disp('bp delta')
+    %tic
+    %net.od = net.e .* derivate(net.o, opts.activation_type);   %  output delta
     net.od = net.e .* (net.o .* (1 - net.o));   %  output delta
     net.fvd = (net.ffW' * net.od);              %  feature vector delta
     if strcmp(net.layers{n}.type, 'c')         %  only conv layers has sigm function
-        net.fvd = net.fvd .* (net.fv .* (1 - net.fv));
+        net.fvd = net.fvd .* derivate(net.fv);
     end
 
     %  reshape feature vector deltas into output map style
     sa = size(net.layers{n}.a{1});
     fvnum = sa(1) * sa(2);
+    %disp('1');
+    %tic
     for j = 1 : numel(net.layers{n}.a)
         net.layers{n}.d{j} = reshape(net.fvd(((j - 1) * fvnum + 1) : j * fvnum, :), sa(1), sa(2), sa(3));
     end
+    %toc
 
+    %disp('2');
+    %tic
     for l = (n - 1) : -1 : 1
         if strcmp(net.layers{l}.type, 'c')
             for j = 1 : numel(net.layers{l}.a)
-                net.layers{l}.d{j} = net.layers{l}.a{j} .* (1 - net.layers{l}.a{j}) .* (expand(net.layers{l + 1}.d{j}, [net.layers{l + 1}.scale net.layers{l + 1}.scale 1]) / net.layers{l + 1}.scale ^ 2);
+                net.layers{l}.d{j} = derivate(net.layers{l}.a{j}, opts.activation_type) .* (expand(net.layers{l + 1}.d{j}, [net.layers{l + 1}.scale net.layers{l + 1}.scale 1]) / net.layers{l + 1}.scale ^ 2);
             end
         elseif strcmp(net.layers{l}.type, 's')
             for i = 1 : numel(net.layers{l}.a)
@@ -53,8 +66,13 @@ function net = cnnbp(net, y, height, width)
             end
         end
     end
+    %toc
+
+    %toc
 
     %%  calc gradients
+    %disp('bp grad');
+    %tic
     for l = 2 : n
         if strcmp(net.layers{l}.type, 'c')
             for j = 1 : numel(net.layers{l}.a)
@@ -67,7 +85,7 @@ function net = cnnbp(net, y, height, width)
     end
     net.dffW = net.od * (net.fv)' / size(net.od, 2);
     net.dffb = mean(net.od, 2);
-
+    %toc
     function X = rot180(X)
         X = flipdim(flipdim(X, 1), 2);
     end
