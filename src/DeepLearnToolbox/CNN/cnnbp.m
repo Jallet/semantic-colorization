@@ -3,7 +3,11 @@ function net = cnnbp(net, y, height, width, opts)
     n = numel(net.layers);
 
     %   error
-    net.e = net.o - y;
+    %net.e = net.o - y;
+    net.e = net.o;
+    index = (1 : size(y, 2));
+    class = accumarray([y' index'], 1, [opts.classes size(y, 2)]);
+    net.e = net.e - class;
     %  loss function
     
     %square loss

@@ -1,13 +1,13 @@
 function [x_patches, y_patches] = rand_patches(x, y, patch)
-    y_matrix = reshape(y, size(x, 1), size(x, 2), 2, size(y, 2));
+    y_matrix = reshape(y, size(x, 1), size(x, 2), size(y, 2));
     rand_image_index = randint(patch.num, 1, [1, size(y, 2)]);
     rand_row = randint(patch.num, 1, [(patch.row_size + 1) / 2, size(x, 1) - (patch.row_size - 1) / 2]);  
     rand_col = randint(patch.num, 1, [(patch.col_size + 1) / 2, size(x, 2) - (patch.col_size - 1) / 2]);  
     x_patches = zeros(patch.row_size, patch.col_size, patch.num);
-    y_patches = zeros(2, patch.num);
+    y_patches = zeros(1, patch.num);
     for i = 1 : patch.num
         x_patches(:, :, i) = x(rand_row(i) - (patch.row_size - 1) / 2 : rand_row(i) + (patch.col_size - 1) / 2, rand_col(i) - (patch.col_size - 1) / 2 : rand_col(i) + (patch.col_size - 1) / 2);
-        y_patches(:, i) = [y_matrix(rand_row(i), rand_col(i), 1); y_matrix(rand_row(i), rand_col(i), 2)];
+        y_patches(:, i) = y_matrix(rand_row(i), rand_col(i));
     end
 
     %for i = 1 : size(y, 2)

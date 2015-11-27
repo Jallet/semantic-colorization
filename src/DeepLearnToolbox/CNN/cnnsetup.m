@@ -1,4 +1,4 @@
-function net = cnnsetup(net, x, y)
+function net = cnnsetup(net, x, y, opts)
     assert(~isOctave() || compare_versions(OCTAVE_VERSION, '3.8.0', '>='), ['Octave 3.8.0 or greater is required for CNNs as there is a bug in convolution in previous versions. See http://savannah.gnu.org/bugs/?39314. Your version is ' myOctaveVersion]);
     inputmaps = 1;
     mapsize = size(squeeze(x(:, :, 1)));
@@ -29,8 +29,8 @@ function net = cnnsetup(net, x, y)
     % 'ffb' is the biases of the output neurons.
     % 'ffW' is the weights between the last layer and the output neurons. Note that the last layer is fully connected to the output layer, that's why the size of the weights is (onum * fvnum)
     fvnum = prod(mapsize) * inputmaps;
-    onum = size(y, 1);
-
+    %onum = size(y, 1);
+    onum = opts.classes;
     net.ffb = zeros(onum, 1);
     net.ffW = (rand(onum, fvnum) - 0.5) * 2 * sqrt(6 / (onum + fvnum));
 end

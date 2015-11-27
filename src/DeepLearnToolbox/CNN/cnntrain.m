@@ -20,6 +20,11 @@ function net = cnntrain(net, x, y, opts)
             if isempty(net.rL)
                 net.rL(1) = net.L;
             end
+            if ~isfield(net, 'loss')
+                net.loss(1) = net.L;
+            else
+                net.loss(end + 1) = net.L;
+            end
             net.rL(end + 1) = 0.99 * net.rL(end) + 0.01 * net.L;
             disp(['Epoch ' num2str(i) '/' num2str(opts.numepochs) ', Batch: ' num2str(l) '/' num2str(numbatches), ', net.L: ' num2str(net.L) ', net.rL: ' num2str(net.rL(end)) ', Gradient: ' num2str(net.gradient)]);
         end
