@@ -1,17 +1,20 @@
-function net = cnnbp(net, y, height, width, opts)
+function net = cnnbp(net, y, opts)
     local_color_consistent_lambda = 0.5;
     n = numel(net.layers);
-
     %   error
     %net.e = net.o - y;
-    net.e = net.o;
+    tmp  = net.o;
     index = (1 : size(y, 2));
     class = accumarray([y' index'], 1, [opts.classes size(y, 2)]);
-    net.e = net.e - class;
+    %net.e = net.e - class;
+    tmp = log(tmp);
+    tmp = class .* tmp;
+    net.L = -1 * sum(tmp(:)) / size(tmp, 2);
     %  loss function
     
-    %square loss
-    net.L = 1/2* sum(net.e(:) .^ 2) / size(net.e, 2);
+    %square loss, commented by Curio
+    %net.L = 1/2* sum(net.e(:) .^ 2) / size(net.e, 2);
+    %%%
 
     %local color consistent
     %predict_color = reshape(net.o, [height, width, 2, size(y, 2)]);
@@ -25,8 +28,8 @@ function net = cnnbp(net, y, height, width, opts)
     %    diff_v = abs(predict_weighted_color_v - predict_color(:, :, 2, i));
     %     
     %    diff_sum = diff_u .^ 2 + diff_v .^ 2;
-    %    %net.L = net.L + local_color_consistent_lambda * (sum(diff_sum(:)));
-
+    
+    
     %end
     %%  backprop deltas
     %net.od = net.e .* (net.o .* (1 - net.o));   %  output delta
@@ -34,13 +37,18 @@ function net = cnnbp(net, y, height, width, opts)
     %if strcmp(net.layers{n}.type, 'c')         %  only conv layers has sigm function
     %    net.fvd = net.fvd .* (net.fv .* (1 - net.fv));
     %end
-    %disp('bp delta')
     %tic
     %net.od = net.e .* derivate(net.o, opts.activation_type);   %  output delta
-    net.od = net.e .* (net.o .* (1 - net.o));   %  output delta
+
+    %%%commented by Curio
+    %net.od = net.e .* (net.o .* (1 - net.o));   %  output delta
+    %%%
+    %%%Add by Curio
+    net.od = net.o - class;
+    %%%
     net.fvd = (net.ffW' * net.od);              %  feature vector delta
     if strcmp(net.layers{n}.type, 'c')         %  only conv layers has sigm function
-        net.fvd = net.fvd .* derivate(net.fv);
+        net.fvd = net.fvd .* derivate(net.fv, opts.activation_type);
     end
 
     %  reshape feature vector deltas into output map style
