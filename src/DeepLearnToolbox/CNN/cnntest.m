@@ -23,18 +23,22 @@ function [er, original_yuv, original_class_yuv, result_yuv] = cnntest(net, full_
     original_yuv(:, :, 2 : 3) = reshape(full_y, size(original_yuv, 1), size(original_yuv, 2), 2);
     disp('size')
     original_center = center(y, :);
-    original_yuv(:, :, 2) = reshape(original_center(:, 1), size(original_class_yuv, 1), size(original_class_yuv, 2)); 
-    original_yuv(:, :, 3) = reshape(original_center(:, 2), size(original_class_yuv, 1), size(original_class_yuv, 2)); 
+    original_class_yuv(:, :, 2) = reshape(original_center(:, 1), size(original_class_yuv, 2), size(original_class_yuv, 1))'; 
+    original_class_yuv(:, :, 3) = reshape(original_center(:, 2), size(original_class_yuv, 2), size(original_class_yuv, 1))'; 
    
     [~, result_class] = max(net.o);
     result_center = center(result_class, :);
-    result_yuv(:, :, 2) = reshape(result_center(:, 1), size(result_yuv, 1), size(result_yuv, 2)); 
-    result_yuv(:, :, 3) = reshape(result_center(:, 2), size(result_yuv, 1), size(result_yuv, 2)); 
+    size(result_center)
+    
+    result_yuv(:, :, 2) = reshape(result_center(:, 1), size(result_yuv, 2), size(result_yuv, 1))'; 
+    result_yuv(:, :, 3) = reshape(result_center(:, 2), size(result_yuv, 2), size(result_yuv, 1))'; 
+    
     %result_yuv(:, :, 2) = reshape(net.o(1, :), size(result_yuv, 2), size(result_yuv, 1));
     %result_yuv(:, :, 2) = result_yuv(:, :, 2)';
     %result_yuv(:, :, 3) = reshape(net.o(2, :), size(result_yuv, 2), size(result_yuv, 1));
     %result_yuv(:, :, 3) = result_yuv(:, :, 3)';
-    
+    %bad = 0;
+    %er = 0;
     bad = y ~= result_class;
     er = sum(bad(:)) / size(y, 2); 
 end
