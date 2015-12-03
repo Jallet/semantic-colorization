@@ -1,6 +1,6 @@
 %function test_example_CNN
 addpath(genpath('DeepLearnToolbox'));
-train_flag = 0;
+train_flag = 1;
 data_path = '/home/jiangliang/code/semantic-colorization/data/yuv_image/';
 params_path = '/home/jiangliang/code/semantic-colorization/params/';
 result_path = '/home/jiangliang/code/semantic-colorization/result/';
@@ -18,9 +18,9 @@ toc
 
 opts.alpha = 10e-5;
 opts.batchsize = 64;
-opts.numepochs = 100;
+opts.numepochs = 30;
 opts.count = 1;
-opts.c = 1000;
+opts.c = 5000;
 opts.activation_type = 'sigmoid';
 opts.row_size = 45;
 opts.col_size = 45;
@@ -33,7 +33,7 @@ opts.classes = 128
 %train_y = double(image_uv(:, 1 : 1));
 %test_y = double(image_uv(:, 1001 : 1001));
 disp('Splitting and Shufffling data...');
-num_train_samples = 18;
+num_train_samples = 1;
 num_test_samples = 2;
 tic
 train_x = double(mini_image_y(:, :, 1 : num_train_samples));
@@ -141,7 +141,7 @@ if (train_flag)
     cnn = cnntrain(cnn, train_x_patches, train_y_patches, opts);
     toc
     now_time = datestr(now, 'yyyy-mm-DD-HHMM');
-    save([params_path 'cnn.' now_time '.mat'], 'cnn', '-v7.3');
+    save([params_path 'cnn.' now_time '-' num2str(opts.numepochs) '-' num2str(opts.c) '.mat'], 'cnn', '-v7.3');
 else
     %load newest parameter
     tic
@@ -170,11 +170,10 @@ for i = 1 : size(test_x_patches, 4)
     result_yuv(:, :, :, i) = result;
 end
 now_time = datestr(now, 'yyyy-mm-DD-HHMM');
-save([result_path 'result_yuv.' now_time '.mat'], 'result_yuv', '-v7.3');
-save([result_path 'original_yuv.' now_time '.mat'], 'original_yuv', '-v7.3');
-save([result_path 'class_original_yuv.' now_time '.mat'], 'original_class_yuv', '-v7.3');
+save([result_path 'result_yuv.' now_time '_' num2str(opts.numepochs) '-' num2str(opts.c) '.mat'], 'result_yuv', '-v7.3');
+save([result_path 'original_yuv.' now_time '_' num2str(opts.numepochs) '-' num2str(opts.c) '.mat'], 'original_yuv', '-v7.3');
+save([result_path 'class_original_yuv.' now_time '_' num2str(opts.numepochs) '-' num2str(opts.c) '.mat'], 'original_class_yuv', '-v7.3');
 
-%[er] = cnntest(cnn, test_x_patches, test_y_patches);
 toc
 disp(['error' num2str(er)]);
 
