@@ -13,7 +13,14 @@ function net = cnntrain(net, x, y, opts)
             batch_x = x(:, :, kk((l - 1) * opts.batchsize + 1 : l * opts.batchsize));
             batch_y = y(:,    kk((l - 1) * opts.batchsize + 1 : l * opts.batchsize));
             net = cnnff(net, batch_x, opts);
-            net = cnnbp(net, batch_y, size(x, 1), size(x, 2), opts);
+            [~, output_label] = max(net.o);
+            bad = (batch_y ~= output_label);
+            if ~isfield(net, 'er')
+                net.er(1) = double(sum(bad(:)) / size(batch_y, 2));
+            else
+                net.er(end + 1) = double(sum(bad(:)) / size(batch_y, 2));
+            end
+            net = cnnbp(net, batch_y, opts);
             opts.alpha = 1.0/(opts.c + opts.count);
             opts.count = opts.count + 1;
             net = cnnapplygrads(net, opts);
@@ -26,7 +33,7 @@ function net = cnntrain(net, x, y, opts)
                 net.loss(end + 1) = net.L;
             end
             net.rL(end + 1) = 0.99 * net.rL(end) + 0.01 * net.L;
-            disp(['Epoch ' num2str(i) '/' num2str(opts.numepochs) ', Batch: ' num2str(l) '/' num2str(numbatches), ', net.L: ' num2str(net.L) ', net.rL: ' num2str(net.rL(end)) ', Gradient: ' num2str(net.gradient)]);
+            disp(['Epoch ' num2str(i) '/' num2str(opts.numepochs) ', Batch: ' num2str(l) '/' num2str(numbatches), ', net.L: ' num2str(net.L) ', net.rL: ' num2str(net.rL(end)) ', Gradient: ' num2str(net.gradient) ', error: ' num2str(net.er(end))]);
         end
         toc
     end
