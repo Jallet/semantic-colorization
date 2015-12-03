@@ -9,11 +9,13 @@ function net = cnnff(net, x, opts)
             for j = 1 : net.layers{l}.outputmaps   %  for each output map
                 %  create temp output map
                 %size of each output map
+                
                 z = zeros(size(net.layers{l - 1}.a{1}) - [net.layers{l}.kernelsize - 1 net.layers{l}.kernelsize - 1 0]);
                 for i = 1 : inputmaps   %  for each input map
                     %  convolve with corresponding kernel and add to temp output map
                     z = z + convn(net.layers{l - 1}.a{i}, net.layers{l}.k{i}{j}, 'valid');
                 end
+                
                 %  add bias, pass through nonlinearity
                 net.layers{l}.a{j} = activate(z + net.layers{l}.b{j}, opts.activation_type);
             end
@@ -36,5 +38,7 @@ function net = cnnff(net, x, opts)
     end
     %  feedforward into output perceptrons
     %net.o = activate(net.ffW * net.fv + repmat(net.ffb, 1, size(net.fv, 2)), opts.activation_type);
-    net.o = sigm(net.ffW * net.fv + repmat(net.ffb, 1, size(net.fv, 2)));
+    %net.o = sigm(net.ffW * net.fv + repmat(net.ffb, 1, size(net.fv, 2)));
+    %net.o = softmax(net.ffW * net.fv + repmat(net.ffb, 1, size(net.fv, 2)));
+    net.o = softmax(bsxfun(@plus, net.ffW * net.fv, net.ffb));
 end
