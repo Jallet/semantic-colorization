@@ -26,13 +26,13 @@ for i = 1 : length(samples_to_display)
     original_class_rgb_image = yuv2rgb(original_class_yuv(:, :, :, samples_to_display(i)), plot_flag);
     result_rgb_image = yuv2rgb(result_yuv(:, :, :, samples_to_display(i)), plot_flag);
     figure();
-    subplot(1, 3, 1);
-    title('original');
+    subplot(1, 3, 1);  
     imshow(original_rgb_image);
+    title('original');
     subplot(1, 3, 2);
-    title('original_class');
     imshow(original_class_rgb_image);
+    title('original_class');
     subplot(1, 3, 3);
-    title('colorization');
     imshow(result_rgb_image);
+    title('colorization');
 end
