@@ -1,5 +1,8 @@
 %function test_example_CNN
 addpath(genpath('DeepLearnToolbox'));
+if matlabpool('size') <=0
+    matlabpool local 8;
+end
 train_flag = 1;
 data_path = '/home/jiangliang/code/semantic-colorization/data/yuv_image/';
 params_path = '/home/jiangliang/code/semantic-colorization/params/';
@@ -18,9 +21,9 @@ toc
 
 opts.alpha = 10e-5;
 opts.batchsize = 64;
-opts.numepochs = 30;
+opts.numepochs = 100;
 opts.count = 1;
-opts.c = 5000;
+opts.c = 500;
 opts.activation_type = 'sigmoid';
 opts.row_size = 45;
 opts.col_size = 45;
@@ -124,12 +127,12 @@ if (train_flag)
 
     cnn.layers = {
         struct('type', 'i') %input layer
-        struct('type', 'c', 'outputmaps', 16, 'kernelsize', 7) %convolution layer
-        struct('type', 's', 'scale', 3) %sub sampling layer
-        struct('type', 'c', 'outputmaps', 24, 'kernelsize', 5) %convolution layer
-        struct('type', 's', 'scale', 1) %sub sampling layer
-        struct('type', 'c', 'outputmaps', 48, 'kernelsize', 5) %convolution layer
-        struct('type', 's', 'scale', 1) %sub sampling layer
+        struct('type', 'c', 'outputmaps', 32, 'kernelsize', 7) %convolution layer
+        %struct('type', 's', 'scale', 3) %sub sampling layer
+        %struct('type', 'c', 'outputmaps', 24, 'kernelsize', 5) %convolution layer
+        %struct('type', 's', 'scale', 1) %sub sampling layer
+        %struct('type', 'c', 'outputmaps', 48, 'kernelsize', 5) %convolution layer
+        %struct('type', 's', 'scale', 1) %sub sampling layer
     };
     
     
@@ -160,7 +163,7 @@ result_yuv = zeros(size(train_x, 1), size(train_x, 2), 3, size(test_x_patches, 4
 disp('size test y')
 size(test_y_patches)
 for i = 1 : size(test_x_patches, 4)
-    [er, original_class, original, result] = cnntest(cnn, test_x(:, :, i), test_full_y(:, i), test_x_patches(:, :, :, i), test_y_patches(:, :, i), center, opts);
+    [er, original, original_class, result] = cnntest(cnn, test_x(:, :, i), test_full_y(:, i), test_x_patches(:, :, :, i), test_y_patches(:, :, i), center, opts);
     %original(:, :, 2) = original(:, :, 2) / 2.294;
     %original(:, :, 3) = original(:, :, 3) / 1.626;
     original_yuv(:, :, :, i) = original;
@@ -173,11 +176,12 @@ now_time = datestr(now, 'yyyy-mm-DD-HHMM');
 save([result_path 'result_yuv.' now_time '_' num2str(opts.numepochs) '-' num2str(opts.c) '.mat'], 'result_yuv', '-v7.3');
 save([result_path 'original_yuv.' now_time '_' num2str(opts.numepochs) '-' num2str(opts.c) '.mat'], 'original_yuv', '-v7.3');
 save([result_path 'class_original_yuv.' now_time '_' num2str(opts.numepochs) '-' num2str(opts.c) '.mat'], 'original_class_yuv', '-v7.3');
-
+show_colorization_results();
 toc
 disp(['error' num2str(er)]);
 
 %plot mean squared error
 %figure; plot(cnn.rL);
 %assert(er<0.12, 'Too big error');
-quit
+matlabpool close
+%quit

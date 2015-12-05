@@ -7,7 +7,7 @@ opts.batchsize = 5;
 opts.numepochs = 30;
 opts.count = 1;
 opts.c = 500;
-opts.activation_type = 'relu';
+opts.activation_type = 'sigmoid';
 opts.row_size = 45;
 opts.col_size = 45;
 opts.num = 1024;
@@ -15,13 +15,40 @@ opts.classes = 128
 
 cnn.layers = {
     struct('type', 'i') %input layer
-    struct('type', 'c', 'outputmaps', 2, 'kernelsize', 5) %convolution layer
-    struct('type', 's', 'scale', 2) %sub sampling layer
-    struct('type', 'c', 'outputmaps', 2, 'kernelsize', 5) %convolution layer
-    struct('type', 's', 'scale', 2) %subsampling layer
+    struct('type', 'c', 'outputmaps', 3, 'kernelsize', 5) %convolution layer
+     struct('type', 's', 'scale', 2) %sub sampling layer
+      struct('type', 'c', 'outputmaps', 2, 'kernelsize', 5) %convolution layer
+%     struct('type', 's', 'scale', 2) %subsampling layer
 };
 cnn = cnnsetup(cnn, batch_x, batch_y, opts);
 
 cnn = cnnff(cnn, batch_x, opts);
 cnn = cnnbp(cnn, batch_y, opts);
 cnnnumgradcheck(cnn, batch_x, batch_y, opts);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

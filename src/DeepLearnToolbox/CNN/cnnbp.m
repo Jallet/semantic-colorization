@@ -52,30 +52,65 @@ function net = cnnbp(net, y, opts)
     end
 
     %  reshape feature vector deltas into output map style
-    sa = size(net.layers{n}.a{1});
+    sa = size(net.layers{n}.a);
+    %sa = size(net.layers{n}.a{1});
     fvnum = sa(1) * sa(2);
     %disp('1');
     %tic
-    for j = 1 : numel(net.layers{n}.a)
-        net.layers{n}.d{j} = reshape(net.fvd(((j - 1) * fvnum + 1) : j * fvnum, :), sa(1), sa(2), sa(3));
-    end
+    %%%commented by Curio J
+    %for j = 1 : numel(net.layers{n}.a)
+    %    j
+    %    net.layers{n}.d{j} = reshape(net.fvd(((j - 1) * fvnum + 1) : j * fvnum, :), sa(1), sa(2), sa(3));
+    %end
+    %%%commented by Curio J
+    %%%Add by Curio J
+    net.layers{n}.d = reshape(net.fvd, size(net.layers{n}.a));
+    %%%Add by Curio J
     %toc
 
     %disp('2');
     %tic
     for l = (n - 1) : -1 : 1
         if strcmp(net.layers{l}.type, 'c')
-            for j = 1 : numel(net.layers{l}.a)
-                net.layers{l}.d{j} = derivate(net.layers{l}.a{j}, opts.activation_type) .* (expand(net.layers{l + 1}.d{j}, [net.layers{l + 1}.scale net.layers{l + 1}.scale 1]) / net.layers{l + 1}.scale ^ 2);
-            end
+            %%%commented by Curio J
+            %for j = 1 : numel(net.layers{l}.a)
+            %    net.layers{l}.d{j} = derivate(net.layers{l}.a{j}, opts.activation_type) .* (expand(net.layers{l + 1}.d{j}, [net.layers{l + 1}.scale net.layers{l + 1}.scale 1]) / net.layers{l + 1}.scale ^ 2);
+            %end
+            %%%commented by Curio J
+            net.layers{l}.d = derivate(net.layers{l}.a, opts.activation_type) .* (expand(net.layers{l + 1}.d, [net.layers{l + 1}.scale net.layers{l + 1}.scale 1 1]) / net.layers{l + 1}.scale ^ 2);
         elseif strcmp(net.layers{l}.type, 's')
-            for i = 1 : numel(net.layers{l}.a)
-                z = zeros(size(net.layers{l}.a{1}));
-                for j = 1 : numel(net.layers{l + 1}.a)
-                     z = z + convn(net.layers{l + 1}.d{j}, rot180(net.layers{l + 1}.k{i}{j}), 'full');
-                end
-                net.layers{l}.d{i} = z;
+            net.layers{l}.d = zeros(size(net.layers{l}.a));
+            k = net.layers{l + 1}.k;
+            d = net.layers{l + 1}.d;
+            ld = zeros(size(net.layers{l}.a));
+            
+            
+            parfor i = 1 : size(net.layers{l}.a, 3)
+                %for j = 1 : numel(net.layers{l + 1}.a)
+                %     z = z + convn(net.layers{l + 1}.d{j}, rot180(net.layers{l + 1}.k{i}{j}), 'full');
+                %end
+                %net.layers{l}.d{i} = z;
+                
+                filter = squeeze(flipdim(flipdim(k(:, :, size(net.layers{l}.a, 3) - i + 1, :), 1), 2));
+          
+                filter = flipdim(filter, 3);
+                filter = squeeze(filter);
+                %filter = flipdim(filter, 3);
+                %filter = flipdim(rot180(net.layers{l + 1}.k(:, :, i, :)), 3);
+                
+                %filter = squeeze(filter);
+                
+                aug_d = zeros(size(d, 1) + (size(filter, 1) - 1) * 2, size(d, 2) + (size(filter, 2) - 1) * 2, size(d, 3), size(d, 4));
+               
+                aug_d(size(filter, 1) : size(aug_d, 1) - size(filter, 1) + 1, size(filter, 2) : size(aug_d, 2) - size(filter, 2) + 1, :, :) = d;
+                %filter = flipdim(filter, 3);
+                z = convn(aug_d, filter, 'valid');
+                
+                ld(:, :, i, :) = z;
+             
             end
+            net.layers{l}.d = ld;
+            
         end
     end
     %toc
@@ -87,12 +122,24 @@ function net = cnnbp(net, y, opts)
     %tic
     for l = 2 : n
         if strcmp(net.layers{l}.type, 'c')
-            for j = 1 : numel(net.layers{l}.a)
-                for i = 1 : numel(net.layers{l - 1}.a)
-                    net.layers{l}.dk{i}{j} = convn(flipall(net.layers{l - 1}.a{i}), net.layers{l}.d{j}, 'valid') / size(net.layers{l}.d{j}, 3);
+            %net.layers{l}.dk = zeros(size(net.layers{l}.k));
+            for j = 1 : size(net.layers{l}.a, 3)
+                %la = net.layers{l - 1}.a;
+                %tmp = convn(net.layers{l - 1}.a, net.layers{l}.d(:, :, j, :), 'valid');
+                %net.layers{l}.dk(:, :, :, j) = convn(net.layers{l - 1}.a, net.layers{l}.d(:, :, j, :), 'valid') / size(net.layers{l}.d, 4);
+                for i = 1 : size(net.layers{l - 1}.a, 3)    
+                    %tmp = convn(flipall(squeeze(net.layers{l - 1}.a(:, :, i, :))), squeeze(net.layers{l}.d(:, :, j, :)), 'valid') / size(net.layers{l}.d, 4);
+                    net.layers{l}.dk{i}{j} = convn(flipall(squeeze(net.layers{l - 1}.a(:, :, size(net.layers{l - 1}.a, 3) - i + 1, :))), squeeze(net.layers{l}.d(:, :, j, :)), 'valid') / size(net.layers{l}.d, 4);
                 end
-                net.layers{l}.db{j} = sum(net.layers{l}.d{j}(:)) / size(net.layers{l}.d{j}, 3);
+                d = net.layers{l}.d(:, :, j, :);
+                net.layers{l}.db{j} = sum(d(:)) / size(net.layers{l}.d, 4);
             end
+            %for j = 1 : numel(net.layers{l}.a)
+            %    for i = 1 : numel(net.layers{l - 1}.a)
+            %        net.layers{l}.dk{i}{j} = convn(flipall(net.layers{l - 1}.a{i}), net.layers{l}.d{j}, 'valid') / size(net.layers{l}.d{j}, 3);
+            %    end
+            %    net.layers{l}.db{j} = sum(net.layers{l}.d{j}(:)) / size(net.layers{l}.d{j}, 3);
+            %end
         end
     end
     net.dffW = net.od * (net.fv)' / size(net.od, 2);
